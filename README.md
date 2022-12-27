@@ -47,3 +47,5 @@ This code is still under development and contains only a first skeleton at this 
 - Add tracks to our calorimeter images 
 
 Further information about how to read MiniAOD files: https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMiniAOD2017#4_7_MiniAOD_Analysis_Documentati
+
+For tracks and isolation, this will be helpful: https://github.com/cms-sw/cmssw/blob/master/RecoEgamma/PhotonIdentification/plugins/PhotonIDValueMapProducer.cc#L254
