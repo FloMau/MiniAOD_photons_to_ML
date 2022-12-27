@@ -9,10 +9,6 @@ Further information: https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookSetC
 
 Build a new directory where you want to do your analysis and run the following commands: 
 
-`export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch`
-
-`source $VO_CMS_SW_DIR/cmsset_default.sh`
-
 `source /cvmfs/cms.cern.ch/cmsset_default.sh`
 
 `cmsrel CMSSW_12_6_0`
