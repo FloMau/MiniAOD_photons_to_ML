@@ -13,6 +13,7 @@ import matplotlib.colors as colors
 import mplhep as hep
 import copy 
 plt.style.use([hep.style.ROOT])
+import os 
 
 
 def plot_image(image, title, path):
@@ -32,9 +33,9 @@ def plot_image(image, title, path):
 
 def hadronic_fake_candidate(photon_candidate, genJets, genParticles):
     """
-    This function applies the generator matching. 
+    This function checks on truth level if the photon candidate stems from a jet. 
     Loops through all genJets and genParticles and checks if 
-    the closest object at generator level is a prompt photon or a jet. 
+    the closest object at generator level is a prompt photon, prompt electron, prompt muon or stems from a jet. 
     Returns True / False 
     """
 
@@ -59,7 +60,6 @@ def hadronic_fake_candidate(photon_candidate, genJets, genParticles):
 
     is_prompt = False
     pdgId = 0 
-    closest_pt = 0 
 
     for genParticle in genParticles:
 
@@ -74,14 +74,14 @@ def hadronic_fake_candidate(photon_candidate, genJets, genParticles):
         if DeltaR < min_DeltaR and DeltaR < 0.3: 
             min_DeltaR = DeltaR
             pdgId = genParticle.pdgId()
-            closest_pt = genParticle.pt()
             is_prompt = genParticle.isPromptFinalState()
         # print("\t\t INFO: PDG ID:", pdgId)
 
     prompt_electron = True if (abs(pdgId)==11 and is_prompt) else False 
     prompt_photon = True if (pdgId==22 and is_prompt) else False
+    prompt_muon = True if (abs(pdgId)==13 and is_prompt) else False 
     
-    if jet_around_photon and not (prompt_electron or prompt_photon):
+    if jet_around_photon and not (prompt_electron or prompt_photon or prompt_muon):
         return True
     else:
         return False
@@ -89,10 +89,13 @@ def hadronic_fake_candidate(photon_candidate, genJets, genParticles):
 
 def select_recHits(recHits, photon_seed, distance=5):
 
+    """
+    This function selects ECAL RecHits around the seed of the photon candidate.
+    Selects a square of size 2*distance+1
+    """
+
     seed_i_eta = photon_seed.ieta()
     seed_i_phi = photon_seed.iphi()
-
-    print(seed_i_eta, seed_i_phi)
 
     rechits_array = np.zeros((2*distance+1, 2*distance+1))
     for recHit in recHits:
@@ -114,31 +117,28 @@ def select_recHits(recHits, photon_seed, distance=5):
 
 
 
-def main(path = ""):
+def main(path = "", distance=5):
 
     # object collections we want to read:
     # can look into files via: "edmDumpEventContent filepath" to show all available collections
     photonHandle, photonLabel = Handle("std::vector<pat::Photon>"), "slimmedPhotons"
-    # CaloClusterHandle, CaloClusterLabel = Handle("std::vector<reco::CaloCluster>"), "reducedEgamma:reducedEBEEClusters"
     RecHitHandle, RecHitLabel = Handle("edm::SortedCollection<EcalRecHit,edm::StrictWeakOrdering<EcalRecHit> >"), "reducedEgamma:reducedEBRecHits" 
     genParticlesHandle, genParticlesLabel = Handle("std::vector<reco::GenParticle>"), "prunedGenParticles"
     genJetsHandle, genJetsLabel = Handle("std::vector<reco::GenJet>"), "slimmedGenJets"
 
-    # open file (you can use 'edmFileUtil -d /store/whatever.root' to get the physical file name)
-    print("INFO: trying to access file...")
+    print("INFO: opening file", path.split("/")[-1])
     events = Events(path)
-    print("INFO: successfully accessed file...")
 
     # just read some events for testing 
-    stop_index = 300
+    stop_index = 100
     for i,event in enumerate(events):
-        # if i != 29: continue 
+
         if i == stop_index: 
             break 
     
-        # print("\n Event", i)
+        if i % 1000 == 0:
+            print("\n \t INFO: processing event", i)
 
-        # event.getByLabel(CaloClusterLabel, CaloClusterHandle)
         event.getByLabel(photonLabel, photonHandle)
         event.getByLabel(RecHitLabel, RecHitHandle)
         event.getByLabel(genParticlesLabel, genParticlesHandle)
@@ -147,7 +147,7 @@ def main(path = ""):
         genJets = genJetsHandle.product()
         genParticles = genParticlesHandle.product()
     
-        for n_photon, photon in enumerate(photonHandle.product()):
+        for photon in photonHandle.product():
 
             is_real = False 
             is_hadronic_fake = False 
@@ -163,26 +163,23 @@ def main(path = ""):
             # photon.genParticle seems to exist only if it is matched to a gen-level photon
             try: 
                 pdgId = photon.genParticle().pdgId()
-                # print("PDG ID of photon.genparticle:", pdgId)
                 if pdgId == 22: 
                     is_real = True 
            
             except ReferenceError:
-                print("INFO: checking for hadronic fake in event", i)
                 is_hadronic_fake = hadronic_fake_candidate(photon, genJets, genParticles)
-                print("INFO: hadronic fake is", is_hadronic_fake)
-
-            # just for debugging, look at fakes only, comment this off if you want to process real photons 
-            if not is_hadronic_fake: continue 
 
             # get crystal indices of photon candidate seed:
             seed_id = ROOT.EBDetId(seed_id)
 
             recHits = RecHitHandle.product()
 
-            rechits_array = select_recHits(photon_seed=seed_id, recHits=recHits)
+            rechits_array = select_recHits(photon_seed=seed_id, recHits=recHits, distance=distance)
 
-            plot_image(rechits_array, str(i), str(i))
+            ### calo image can be plotted:
+            # plot_image(rechits_array, str(i), str(i))
+
+            ### to be implemented here: separately save real and fake photons for later ML studies
 
 
 
@@ -192,10 +189,14 @@ if __name__ == "__main__":
     # path_test_file = "/eos/cms/store/group/phys_egamma/ec/fmausolf/DoublePhotonMiniAOD/01357d93-bd85-4317-87c4-e0f57a10c50a.root"
 
     # GJet samples (Run 3)
-    path_test_file = "/eos/cms/store/group/phys_egamma/ec/fmausolf/GJet_Run3_MiniAOD/0176f78e-294f-4ec1-9e8d-ddcbf471ae65.root"
+    # path_test_file = "/eos/cms/store/group/phys_egamma/ec/fmausolf/GJet_Run3_MiniAOD/0176f78e-294f-4ec1-9e8d-ddcbf471ae65.root"
     
+    path_GJet_files = "/eos/cms/store/group/phys_egamma/ec/fmausolf/GJet_Run3_MiniAOD/Pt-40toInf/GJet_Pt-40toInf_DoubleEMEnriched_TuneCP5_13p6TeV_pythia8/GJetRun3_Pt-40toInf/221228_143544/0000/"
 
-    main(path = path_test_file)
+    filenames = os.listdir(path_GJet_files)
+    # just take one file for tests
+    filenames = filenames[:1]
 
+    for filename in filenames: 
 
-    # search DAS for sth like: dataset=/GJet*Double*/*/MINIAODSIM
+        main(path = path_GJet_files+"output_5.root", distance=5)
