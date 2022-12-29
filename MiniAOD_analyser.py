@@ -199,4 +199,4 @@ if __name__ == "__main__":
 
     for filename in filenames: 
 
-        main(path = path_GJet_files+"output_5.root", distance=5)
+        main(path = path_GJet_files+filename, distance=5)
