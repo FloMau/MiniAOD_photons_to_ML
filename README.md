@@ -4,7 +4,7 @@ This code extracts photon candidates from CMS MiniAOD files and is meant to buil
 
 The files `CRAB_config.py` and `slim_MiniAODs.py` are needed to slim the MiniAOD files and store locally (already done).
 
-For the further analysis of the data, `MiniAOD_analyser.py` has to be used.  
+For the further analysis of the data, `MiniAOD_analyser.py` can be used.  
 How to run the code: 
 
 ### 1) Setup CMSSW environment 
