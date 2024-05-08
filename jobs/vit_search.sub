@@ -1,0 +1,20 @@
+# train ViT
+requirements = (Machine == "lx3agpu2.physik.rwth-aachen.de") || (Machine == "lx3agpu3.physik.rwth-aachen.de") || (Machine == "lx3agpu4.physik.rwth-aachen.de")
+
+executable = shfiles/vit_search.sh
+
+jobnumber = $INT(PROCESS,%03d)
+log = logs/vit_search_$(jobnumber)
+output = outs/vit_search_$(jobnumber)
+error = errs/vit_search_$(jobnumber)
+
+
+#request_cpus = 1
+request_memory = 120000
+
+request_GPUs = 1
+
+transfer_input_files = $(filename)
+arguments = $(filename)
+
+queue filename from parameterfiles.txt

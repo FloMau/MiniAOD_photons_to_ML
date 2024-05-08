@@ -1,0 +1,15 @@
+/home/home1/institut_3a/kappe/work/models/vit_2_16.json
+/home/home1/institut_3a/kappe/work/models/vit_2_2.json
+/home/home1/institut_3a/kappe/work/models/vit_2_32.json
+/home/home1/institut_3a/kappe/work/models/vit_2_4.json
+/home/home1/institut_3a/kappe/work/models/vit_2_8.json
+/home/home1/institut_3a/kappe/work/models/vit_4_16.json
+/home/home1/institut_3a/kappe/work/models/vit_4_2.json
+/home/home1/institut_3a/kappe/work/models/vit_4_32.json
+/home/home1/institut_3a/kappe/work/models/vit_4_4.json
+/home/home1/institut_3a/kappe/work/models/vit_4_8.json
+/home/home1/institut_3a/kappe/work/models/vit_8_16.json
+/home/home1/institut_3a/kappe/work/models/vit_8_2.json
+/home/home1/institut_3a/kappe/work/models/vit_8_32.json
+/home/home1/institut_3a/kappe/work/models/vit_8_4.json
+/home/home1/institut_3a/kappe/work/models/vit_8_8.json

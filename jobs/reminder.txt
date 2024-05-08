@@ -1,0 +1,9 @@
+# the cmsenv will be set by the job itself
+
+# to acces remote data, use in shell before submission: 
+voms-proxy-init --voms cms
+#( I do not know how to create the proxy in the job due to the password)
+
+# for tensorflow:
+source /net/software/deep-learning/virtualenv/python3.9/tensorflow2.10/bin/activate
+#( watch out: does not work with cmsenv at the same time)

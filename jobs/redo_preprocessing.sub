@@ -1,0 +1,20 @@
+# write relevant data from photon events into pickled dataframes 
+
+executable = shfiles/preprocessing.sh
+
+jobnumber = $INT(PROCESS,%03d)
+log = logs/redo_preprocessing_$(jobnumber)
+output = outs/redo_preprocessing_$(jobnumber)
+error = errs/redo_preprocessing_$(jobnumber)
+
+request_cpus = 1
+request_memory = 2000
+
+#initaldir = /home/home1/institut_3a/kappe/work/jobs
+
+transfer_input_files = $(filename)
+arguments = $(filename)
+
+use_x509userproxy = true 
+
+queue filename from redo_preprocessing.txt

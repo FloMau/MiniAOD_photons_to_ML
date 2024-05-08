@@ -1,0 +1,15 @@
+# train ViT
+requirements = (Machine == "lx3agpu2.physik.rwth-aachen.de") || (Machine == "lx3agpu3.physik.rwth-aachen.de") || (Machine == "lx3agpu4.physik.rwth-aachen.de")
+
+executable = shfiles/vit.sh
+
+log = logs/vit
+output = outs/vit
+error = errs/vit
+
+#request_cpus = 1
+request_memory = 120000
+
+request_GPUs = 1
+
+queue
