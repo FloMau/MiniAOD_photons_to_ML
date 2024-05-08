@@ -1,1 +1,0 @@
-python3 preprocess.py /store/mc/Run3Summer22EEMiniAODv4/GJet_PT-40_DoubleEMEnriched_TuneCP5_13p6TeV_pythia8/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/50000/0d65373b-d8c0-4aa3-b4a7-c49943a48017.root --test --datasite T2_US_Wisconsin
