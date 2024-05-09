@@ -1,13 +1,14 @@
 from numpy.typing import NDArray
 from typing import TypeVar
-import numpy as np
-import keras
+from numpy import bool_
+from keras.callbacks import Callback
+from keras.layers import Layer
 
 # my type aliases
 Filename = str
-Mask = NDArray[np.bool_]
+Mask = NDArray[bool_]
 
 Particle = TypeVar('Particle')
 
-Callback = keras.callbacks.Callback
-Layer = keras.layers.Layer
+Callback = Callback
+Layer = Layer

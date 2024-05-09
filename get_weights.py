@@ -23,27 +23,24 @@ def plot_2dhist(hist):
     plt.pcolormesh(*hist.axes.edges.T, hist.view().T, norm=mpl.colors.LogNorm())
 
 
-def process_args() -> Tuple[Filename, bool, bool]:
+def process_args() -> pd.DataFrame:
     parser = argparse.ArgumentParser(description='get weights and save them')
     parser.add_argument('--datafile', default='data/new_data_pre.pkl', help='data to be used')
-    parser.add_argument('--nosave', action='store_true', help='set to not store the weights (but only the plots)')
-    parser.add_argument('--barrel_only', action='store_true', help='set to only use barrel')
+    parser.add_argument('--preselectionfile', help='apply preselection from given file')
     args = parser.parse_args()
-    return args.datafile, args.nosave, args.barrel_only
+
+    datafile_: Filename = args.datafile
+    preselectionfile: Optional[Filename] = args.preselectionfile
+
+    df_ = pd.read_pickle(datafile_)
+    preselection: Mask = np.ones(len(df_))
+    if preselectionfile is not None:
+        preselection = np.load(preselectionfile)
+
+    return df_[preselection]
 
 ############################################################
-datafile, nosave, barrel_only = process_args()
-
-if barrel_only:
-    datafile = 'data/new_data_pre_barrel.pkl'
-
-df_all = pd.read_pickle(datafile)
-preselection = np.ones(len(df_all), dtype=bool)
-# todo do this properly (currently preselection is all true, because data is already preselected)
-df = df_all[preselection]
-if barrel_only:
-    df = df[np.abs(df.eta)<1.44]
-    print('\n\nexluding eta\n\n')
+df = process_args()
 
 real = df.real
 fake = ~real
@@ -91,10 +88,8 @@ for i in range(len(in_endcap)):
     segment_idx = (i-2) // num_merge
     hist_real[-1, i] = last_real[segment_list[segment_idx] : segment_list[segment_idx+1]].sum()
     hist_fake[-1, i] = last_fake[segment_list[segment_idx] : segment_list[segment_idx+1]].sum()
+
 ##############################################################################
-
-
-
 # plot histograms
 fig_real = plt.figure(figsize=(10, 8), constrained_layout=True)
 plot_2dhist(hist_real)
@@ -102,8 +97,7 @@ plt.title('reals after preselection')
 plt.xlabel('$p_t$ [GeV]')
 plt.ylabel('$\eta$')
 plt.colorbar(label='#')
-if barrel_only:
-    plt.ylim(-1.5, 1.5)
+plt.ylim(-1.5, 1.5)
 
 fig_fake = plt.figure(figsize=(10, 8), constrained_layout=True)
 plot_2dhist(hist_fake)
@@ -111,15 +105,14 @@ plt.title('fakes after preselection')
 plt.xlabel('$p_t$ [GeV]')
 plt.ylabel('$\eta$')
 plt.colorbar(label='#')
-if barrel_only:
-    plt.ylim(-1.5, 1.5)
+plt.ylim(-1.5, 1.5)
+
 
 # get weights
 pt_idxs = np.digitize(pt, pt_bins)  # digittize checks bin[i-1]<=x<bin[i] -> fits if flow=True
 eta_idxs = np.digitize(eta, eta_bins)
 weight_hist = hist_real/hist_fake
 weights = weight_hist.view(flow=True)[pt_idxs, eta_idxs]
-
 
 
 # plot weights
@@ -129,8 +122,7 @@ plt.title(f'Weights after preselection; real:fake={int(ratio)}')
 plt.xlabel('$p_t$ [GeV]')
 plt.ylabel('$\eta$')
 plt.colorbar(label='weights for fake photons')
-if barrel_only:
-    plt.ylim(-1.5, 1.5)
+plt.ylim(-1.5, 1.5)
 
 # plot weights
 fig_weights_real = plt.figure(figsize=(10, 8), constrained_layout=True)
@@ -139,8 +131,7 @@ plt.title(f'Weights after preselection; real:fake={int(ratio)}')
 plt.xlabel('$p_t$ [GeV]')
 plt.ylabel('$\eta$')
 plt.colorbar(label='weights for real photons')
-if barrel_only:
-    plt.ylim(-1.5, 1.5)
+plt.ylim(-1.5, 1.5)
 ###########################################################################
 # save figures
 fignames = 'plots/hist_real.png', 'plots/hist_fake.png', 'plots/hist_weights_fake.png', 'plots/hist_weights_real.png'
@@ -174,27 +165,6 @@ np.save(fake_file, weights_fake)
 print(f'INFO: fake weights saved as {fake_file}')
 np.save(real_file, weights_real)
 print(f'INFO: real weights saved as {real_file}')
-
-
-# # add weights to dataframe
-# df_all['weight_fake'] = np.ones_like(df_all.pt)
-# df_all.weight_fake[preselection & fake] = weights[fake]
-# df_all.weight_fake[real] = 1.
-
-# df_all['weight_real'] = np.ones_like(df_all.pt)
-# df_all.weight_real[preselection & real] = 1/weights[real]
-# df_all.weight_real[fake] = 1.
-
-# # ignore events with pt > 250
-# df_all.weight_fake[pt > 250] = 0.
-# df_all.weight_real[pt > 250] = 0.
-
-# # save under original name:
-# if not nosave:
-#     print('DO NOT INTERRUPT NOW')
-#     pd.to_pickle(df_all, datafile)
-#     print('NOW IS OKAY')
-#     print(f'INFO: updated {datafile}')
 
 
 print('FINISHED')
