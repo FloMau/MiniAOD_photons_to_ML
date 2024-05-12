@@ -1,0 +1,1 @@
+dasgoclient -query="file dataset=/GJet_PT-40_DoubleEMEnriched_TuneCP5_13p6TeV_pythia8/Run3Summer22EEMiniAODv4-130X_mcRun3_2022_realistic_postEE_v6-v2/MINIAODSIM" > filenames.txt 
