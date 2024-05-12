@@ -1,12 +1,16 @@
 import numpy as np
 import pandas as pd
 import argparse
-
+# from mytypes import Filename
+from typing import Tuple
+from mytypes import Filename, Mask
 
 def setup_parser():
     parser = argparse.ArgumentParser(description='pythonscript to calculate and save preselection mask')
     parser.add_argument('datafile', help='file to be read')
     parser.add_argument('outfile', help='save preselection as file')
+    parser.add_argument('--barrel_only', action='store_true', help='only read photons in the barrel '
+                                                                    '(makes the array smaller instead of adding as mask on top')
     args = parser.parse_args()
     return args
 
@@ -43,7 +47,9 @@ def get_preselection(df):
     total_mask = pt & eta & shower_shape & one_of
     return total_mask
 
-
+def get_total_preselection(df) -> Mask:
+    """adds eveto to preselection and filters NaNs in rho"""
+    return get_preselection(df) & df['eveto'] & (~np.isnan(df['rho']))
 
 
 if __name__ == "__main__":
@@ -52,7 +58,10 @@ if __name__ == "__main__":
     outfile = args.outfile
 
     df = pd.read_pickle(filename)
-    preselection = get_preselection(df) * df.eveto
+    preselection = get_total_preselection(df) * df['eveto']
+    if barrel_only:
+        preselection = preselection[df['detID']]
+
 
     np.save(outfile, preselection)
     print(f'INFO: saved as {outfile}')
