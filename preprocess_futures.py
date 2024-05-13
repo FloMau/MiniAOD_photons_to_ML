@@ -20,36 +20,36 @@ ROOT.gSystem.Load("libDataFormatsFWLite.so")
 ROOT.FWLiteEnabler.enable()
 
 
-# def get_pt(photon: Particle) -> float:
-#     return photon.pt()
+def get_pt(photon: Particle) -> float:
+    return photon.pt()
 
-# def get_et(photon: Particle) -> float:
-#     return photon.et()
+def get_et(photon: Particle) -> float:
+    return photon.et()
 
-# def get_eta(photon: Particle) -> float:
-#     return photon.eta()
+def get_eta(photon: Particle) -> float:
+    return photon.eta()
 
-# def get_phi(photon: Particle) -> float:
-#     return photon.phi()
+def get_phi(photon: Particle) -> float:
+    return photon.phi()
 
-# def get_r9(photon: Particle) -> float:
-#     return photon.full5x5_r9()
+def get_r9(photon: Particle) -> float:
+    return photon.full5x5_r9()
 
-# def get_HoE(photon: Particle) -> float:
-#     return photon.hadronicOverEm()
+def get_HoE(photon: Particle) -> float:
+    return photon.hadronicOverEm()
 
-# def get_sigma_ieie(photon: Particle) -> float:
-#     return photon.sigmaEtaEta()
+def get_sigma_ieie(photon: Particle) -> float:
+    return photon.sigmaEtaEta()
 
-# def get_isolations(photon: Particle) -> Tuple[float, float, float, float]:
-#     """I_ch, I_gamma, I_n, I_track"""
-#     return photon.chargedHadronIso(), photon.photonIso(), photon.neutralHadronIso(), photon.trackIso()
+def get_isolations(photon: Particle) -> Tuple[float, float, float, float]:
+    """I_ch, I_gamma, I_n, I_track"""
+    return photon.chargedHadronIso(), photon.photonIso(), photon.neutralHadronIso(), photon.trackIso()
 
-# def get_ecalIso(photon: Particle) -> float:
-#     return photon.ecalPFClusterIso()
+def get_ecalIso(photon: Particle) -> float:
+    return photon.ecalPFClusterIso()
 
-# def get_hcalIso(photon: Particle) -> float:
-#     return photon.hcalPFClusterIso()
+def get_hcalIso(photon: Particle) -> float:
+    return photon.hcalPFClusterIso()
 
 def is_real(photon: Particle) -> bool:
     """returns True for a real photon and False for a fake"""
@@ -62,39 +62,39 @@ def is_real(photon: Particle) -> bool:
     except ReferenceError:
         return False  # fake
 
-# def did_convert_full(photon: Particle) -> bool:
-#     """checks if photon converted and both tracks got reconstructed"""
-#     if photon.conversions(): return True
-#     else: return False
+def did_convert_full(photon: Particle) -> bool:
+    """checks if photon converted and both tracks got reconstructed"""
+    if photon.conversions(): return True
+    else: return False
 
-# def did_convert_oneleg(photon: Particle) -> bool:
-#     """checks if photon converted and only one track got reconstructed"""
-#     if photon.conversionsOneLeg(): return True
-#     else: return False
+def did_convert_oneleg(photon: Particle) -> bool:
+    """checks if photon converted and only one track got reconstructed"""
+    if photon.conversionsOneLeg(): return True
+    else: return False
 
-# def get_detector_ID(photon: Particle) -> bool:
-#     '''returns True for Barrel and False for Endcap'''
-#     return photon.superCluster().seed().seed().subdetId()==1
+def get_detector_ID(photon: Particle) -> bool:
+    '''returns True for Barrel and False for Endcap'''
+    return photon.superCluster().seed().seed().subdetId()==1
 
-# def pass_eveto(photon: Particle) -> bool:
-#     return photon.passElectronVeto()
+def pass_eveto(photon: Particle) -> bool:
+    return photon.passElectronVeto()
 
-# def get_mc_truth(photon: Particle) -> int:
-#     try:
-#         pdgId = photon.genParticle().pdgId()
-#         return pdgId
-#     except ReferenceError:
-#         return -1
+def get_mc_truth(photon: Particle) -> int:
+    try:
+        pdgId = photon.genParticle().pdgId()
+        return pdgId
+    except ReferenceError:
+        return -1
 
-# def get_bdt_run2(photon: Particle) -> float:
-#     # mva is range -1 to 1, I use 0 to 1
-#     mva = photon.userFloat("PhotonMVAEstimatorRunIIFall17v2Values")
-#     return (mva+1)/2
+def get_bdt_run2(photon: Particle) -> float:
+    # mva is range -1 to 1, I use 0 to 1
+    mva = photon.userFloat("PhotonMVAEstimatorRunIIFall17v2Values")
+    return (mva+1)/2
 
-# def get_bdt_run3(photon: Particle) -> float:
-#     # mva is range -1 to 1, I use 0 to 1
-#     mva = photon.userFloat("PhotonMVAEstimatorRunIIIWinter22v1Values")
-#     return (mva+1)/2
+def get_bdt_run3(photon: Particle) -> float:
+    # mva is range -1 to 1, I use 0 to 1
+    mva = photon.userFloat("PhotonMVAEstimatorRunIIIWinter22v1Values")
+    return (mva+1)/2
 
 
 def get_all(photon: Particle) -> dict[str, Union[int, float, bool]]:
@@ -253,27 +253,27 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
     df['num_real'] = num_real_list
     df['num_fake'] = num_fake_list
 
-    rechits = np.array(rechit_list)
+    rechits = np.array(rechit_list, dtype=np.float32)
     return df, rechits
 
 
-def process_file(file):
+def process_file(file: Filename) -> None:
 
-    datasite = None
+    datasite = 'T2_US_Wisconsin'
+    datasite = 'T1_US_FNAL_Disk'
     if datasite is not None:
         file = '/store/test/xrootd/' + datasite + file
-    else:
-        file = 'root://xrootd-cms.infn.it/' + file
+    file = 'root://xrootd-cms.infn.it/' + file
 
     df, rechits = main(file, rechitdistance=16)
 
     # save stuff
-    savedir = './output02May2024/'
+    savedir = '/net/scratch_cms3a/kappe/output07May2024_low_pt/'
     if not (os.path.exists(savedir + "/recHits") and  os.path.exists(savedir + "/df")):
         os.makedirs(savedir + "/df")
         os.makedirs(savedir + "/recHits")
 
-    outname = file.split('/')[-1].split('.')[0]  # name of input file without directory and ending
+    outname: str = file.split('/')[-1].split('.')[0]  # name of input file without directory and ending
 
     dfname: Filename = savedir + 'df/' + outname + '.pkl'
     df.to_pickle(dfname)
@@ -284,3 +284,6 @@ def process_file(file):
     print('INFO: recHits file saved as:', rechitname)
 
     print('INFO: finished running.')
+
+if __name__ == '__main__':
+    process_file('/store/mc/Run3Summer22EEMiniAODv4/GJet_PT-40_DoubleEMEnriched_TuneCP5_13p6TeV_pythia8/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/30000/cb93eb36-cefb-4aea-97aa-fcf8cd72245f.root')
