@@ -8,10 +8,9 @@ import argparse
 
 from get_preselection import get_total_preselection
 
-from typing import List, Tuple, Optional, Union
+from typing import List, Tuple, Union
 from numpy.typing import NDArray
-from typing import TypeVar
-from mytypes import Filename, Mask, Particle
+from mytypes import Filename, Particle
 
 
 ROOT.gROOT.SetBatch(True)
@@ -214,6 +213,9 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
         num_real: int = 0
         num_fake: int = 0
         for photon in photonHandle.product():
+            if not get_detector_ID(photon): 
+                continue
+            
             # dataframe
             if is_real(photon):
                 num_real += 1
