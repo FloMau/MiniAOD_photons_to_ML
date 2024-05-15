@@ -185,7 +185,7 @@ def select_rechits(recHits, photon_seed, distance=5) -> NDArray[float]:
 
 
 def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray[NDArray[float]]]:
-    """loop through all events and photons per event in a given file"""
+    """loop through all events and photons per event in a given file, read ECAL recHits and photon attributes."""
     print("INFO: opening file", file.split("/")[-1])
     print('full filename:', file)
     photonHandle, photonLabel = Handle("std::vector<pat::Photon>"), "slimmedPhotons"
@@ -250,8 +250,7 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
     print('INFO: all events processed')
 
     df: pd.DataFrame = pd.DataFrame(df_list)  # labels are taken from the dicts in data_list
-    df['num_real'] = num_real_list
-    df['num_fake'] = num_fake_list
+
 
     rechits = np.array(rechit_list, dtype=np.float32)
     return df, rechits
@@ -260,7 +259,7 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
 def process_file(file: Filename) -> None:
 
     datasite = 'T2_US_Wisconsin'
-    datasite = 'T1_US_FNAL_Disk'
+    # datasite = 'T1_US_FNAL_Disk'
     if datasite is not None:
         file = '/store/test/xrootd/' + datasite + file
     file = 'root://xrootd-cms.infn.it/' + file
@@ -268,18 +267,18 @@ def process_file(file: Filename) -> None:
     df, rechits = main(file, rechitdistance=16)
 
     # save stuff
-    savedir = '/net/scratch_cms3a/kappe/output07May2024_low_pt/'
+    savedir = './output15May2024'
     if not (os.path.exists(savedir + "/recHits") and  os.path.exists(savedir + "/df")):
         os.makedirs(savedir + "/df")
         os.makedirs(savedir + "/recHits")
 
     outname: str = file.split('/')[-1].split('.')[0]  # name of input file without directory and ending
 
-    dfname: Filename = savedir + 'df/' + outname + '.pkl'
+    dfname: Filename = savedir + '/df/' + outname + '.pkl'
     df.to_pickle(dfname)
     print('INFO: photon df file saved as:', dfname)
 
-    rechitname: str = savedir + 'recHits/' + outname + '.npy'
+    rechitname: str = savedir + '/recHits/' + outname + '.npy'
     np.save(rechitname, rechits)
     print('INFO: recHits file saved as:', rechitname)
 
