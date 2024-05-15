@@ -17,8 +17,8 @@ def setup_parser():
 def get_preselection(df):
     '''returns mask for preselction, without eveto'''
     pt = df['pt'] > 25  # no leading photon, because I do single photon studies
-    transition = (1.44 < df['eta'].abs()) & (df['eta'].abs() < 1.57)
-    eta = (df['eta'].abs() < 2.5) & (~transition)
+    transition = (1.44 < np.abs(df['eta'])) & (np.abs(df['eta']) < 1.57)
+    eta = (np.abs(df['eta']) < 2.5) & (~transition)
     HoE = df['HoE'] < 0.08
     iso_gamma = df['I_gamma'] < 4.0
     iso_track = df['I_tr'] < 6.0
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     outfile = args.outfile
 
     df = pd.read_pickle(filename)
-    preselection = get_total_preselection(df) * df['eveto']
+    preselection = get_total_preselection(df) & df['eveto']
     if barrel_only:
         preselection = preselection[df['detID']]
 
