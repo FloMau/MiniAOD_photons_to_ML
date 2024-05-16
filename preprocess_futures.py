@@ -4,7 +4,8 @@ from DataFormats.FWLite import Handle, Events
 import os
 import numpy as np
 import pandas as pd
-import argparse
+from datetime import date
+
 
 from get_preselection import get_total_preselection
 
@@ -197,8 +198,6 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
     # lists to fill in the eventloop:
     df_list: List[dict] = []  # save data in nested list to convert to DataFrame later
     rechit_list: List[NDArray] = []  # save data in nested list to convert to DataFrame later
-    num_real_list: List[int] = []
-    num_fake_list: List[int] = []
     for i, event in enumerate(events):
         if i == 0:
             print("\tINFO: file open sucessful, starting Event processing")
@@ -210,18 +209,11 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
         event.getByLabel(RecHitLabelEE, RecHitHandleEE)
         event.getByLabel(rhoLabel, rhoHandle)
 
-        num_real: int = 0
-        num_fake: int = 0
         for photon in photonHandle.product():
             if not get_detector_ID(photon): 
                 continue
             
             # dataframe
-            if is_real(photon):
-                num_real += 1
-            else:
-                num_fake += 1
-            
             seed_id = photon.superCluster().seed().seed()
             seed_id = ROOT.EBDetId(seed_id)  # get crystal indices of photon candidate seed:
 
@@ -245,8 +237,6 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
             rechits_array = select_rechits(photon_seed=seed_id, recHits=recHits, distance=rechitdistance)
             rechit_list += [rechits_array]
 
-        num_real_list += [num_real]*(num_real + num_fake)
-        num_fake_list += [num_fake]*(num_real + num_fake)
     print('INFO: all events processed')
 
     df: pd.DataFrame = pd.DataFrame(df_list)  # labels are taken from the dicts in data_list
@@ -258,8 +248,11 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
 
 def process_file(file: Filename) -> None:
 
-    datasite = 'T2_US_Wisconsin'
-    # datasite = 'T1_US_FNAL_Disk'
+    # determine datasite from filename
+    datasite = 'T2_US_Wisconsin'  # high pt, g+jets, postEE
+    if '10to40' in file:
+        datasite = 'T1_US_FNAL_Disk'  # low pt, g+jets, postEE
+    
     if datasite is not None:
         file = '/store/test/xrootd/' + datasite + file
     file = 'root://xrootd-cms.infn.it/' + file
@@ -267,18 +260,23 @@ def process_file(file: Filename) -> None:
     df, rechits = main(file, rechitdistance=16)
 
     # save stuff
-    savedir = './output15May2024'
-    if not (os.path.exists(savedir + "/recHits") and  os.path.exists(savedir + "/df")):
-        os.makedirs(savedir + "/df")
-        os.makedirs(savedir + "/recHits")
+    current_date = date.today()
+    formatted_date = current_date.strftime("%d%B%Y")
+    savedir = f'./output{formatted_date}/'
+    # in principle there is no need to distinguish between low/high pt when saving
+    # they all have different names (I checked)
+    if not (os.path.exists(savedir + "recHits/") and  os.path.exists(savedir + "df/")):
+        os.makedirs(savedir + "df/")
+        os.makedirs(savedir + "recHits/")
 
     outname: str = file.split('/')[-1].split('.')[0]  # name of input file without directory and ending
+    dfname: Filename = savedir + 'df/' + outname + '.pkl'
+    rechitname: str = savedir + 'recHits/' + outname + '.npy'
 
-    dfname: Filename = savedir + '/df/' + outname + '.pkl'
+
     df.to_pickle(dfname)
     print('INFO: photon df file saved as:', dfname)
 
-    rechitname: str = savedir + '/recHits/' + outname + '.npy'
     np.save(rechitname, rechits)
     print('INFO: recHits file saved as:', rechitname)
 
