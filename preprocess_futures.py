@@ -225,7 +225,6 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
             if not get_total_preselection(photonAttributes):
                 continue
 
-            df_list += [photonAttributes]  # list of dicts with the values of the respective photon
 
             # rechits
             # usung photon.EEDetId() directly gives the same value but errors in select_recHits
@@ -235,6 +234,11 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
             else:
                 recHits = RecHitHandleEE.product()
             rechits_array = select_rechits(photon_seed=seed_id, recHits=recHits, distance=rechitdistance)
+
+            if rechits_array.sum()==0: continue
+
+            # add event only after filtering barrel, preselection and empty rechits
+            df_list += [photonAttributes]  # list of dicts with the values of the respective photon
             rechit_list += [rechits_array]
 
     print('INFO: all events processed')
