@@ -15,7 +15,7 @@ def process_args() -> Tuple[str, int]:
     args = parser.parse_args()
     print(args)
     file_: str = args.file
-    workers_: int = args.workers
+    workers_: int = int(args.workers)
     return file_, workers_
 
 def read_filenames(file_path):
