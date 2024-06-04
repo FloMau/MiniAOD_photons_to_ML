@@ -254,9 +254,10 @@ def process_file(file: Filename) -> None:
 
     # determine datasite from filename
     datasite = 'T2_US_Wisconsin'  # high pt, g+jets, postEE
-    if '10to40' in file:
-        datasite = 'T1_US_FNAL_Disk'  # low pt, g+jets, postEE
-    
+    if 'mgg' in file:  # mgg cut, g+jets, postEE
+        datasite = 'T2_US_Caltech'  
+    elif '10to40' in file:  # low pt, g+jets, postEE
+        datasite = 'T1_US_FNAL_Disk'  
     if datasite is not None:
         file = '/store/test/xrootd/' + datasite + file
     file = 'root://xrootd-cms.infn.it/' + file
