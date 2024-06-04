@@ -254,7 +254,7 @@ def process_file(file: Filename) -> None:
 
     # determine datasite from filename
     datasite = 'T2_US_Wisconsin'  # high pt, g+jets, postEE
-    if 'mgg' in file:  # mgg cut, g+jets, postEE
+    if 'MGG' in file:  # mgg cut, g+jets, postEE
         datasite = 'T2_US_Caltech'  
     elif '10to40' in file:  # low pt, g+jets, postEE
         datasite = 'T1_US_FNAL_Disk'  
@@ -288,4 +288,7 @@ def process_file(file: Filename) -> None:
     print('INFO: finished running.')
 
 if __name__ == '__main__':
-    process_file('/store/mc/Run3Summer22EEMiniAODv4/GJet_PT-40_DoubleEMEnriched_TuneCP5_13p6TeV_pythia8/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/30000/cb93eb36-cefb-4aea-97aa-fcf8cd72245f.root')
+    # high pt test file:
+    # process_file('/store/mc/Run3Summer22EEMiniAODv4/GJet_PT-40_DoubleEMEnriched_TuneCP5_13p6TeV_pythia8/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/30000/cb93eb36-cefb-4aea-97aa-fcf8cd72245f.root')
+    # mgg test file:
+    process_file('/store/mc/Run3Summer22EEMiniAODv4/GJet_PT-40_DoubleEMEnriched_MGG-80_TuneCP5_13p6TeV_pythia8/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/50000/d9c395aa-9eee-426a-944f-9ef41058f2d3.root')
