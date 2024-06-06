@@ -42,7 +42,9 @@ def create_slice_arr(sparse: Sparse) -> NDArray:
     """
     idx_photon = sparse[1]
     idxs_sparse = np.unique(idx_photon, return_index=True, return_counts=False)[1]  
-    slices = np.array([slice(idxs_sparse[i], idxs_sparse[i+1]) for i in range(len(idxs_sparse)-1)] + [slice(idxs_sparse[-1], len(idxs_sparse))])
+    slices = np.empty(idxs_sparse.shape, dtype=slice)
+    slices[:-1] = [slice(idxs_sparse[i], idxs_sparse[i+1]) for i in range(len(idxs_sparse)-1)] 
+    slices[-1] = slice(idxs_sparse[-1], len(idx_photon))
     return slices
 
 def slice_sparse(sparse: Sparse, mask: Mask, slice_array: Optional[NDArray] = None) -> Sparse:
