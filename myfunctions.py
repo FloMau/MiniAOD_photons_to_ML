@@ -36,23 +36,48 @@ def sparse_to_dense(sparse: Sparse, shape: Union[Tuple[int, int], Tuple[int, int
 
 
 def create_slice_arr(sparse: Sparse) -> NDArray:
+    """ 
+    creates an array of slices indexing one photon in the sparse arrays each
+    with this you can select the sparse rechits from e.g. a single photon
+    """
     idx_photon = sparse[1]
-    idxs_dense, _, counts = np.unique(idx_photon, return_index=True, return_counts=True)  
-    # shape: 8Mio, range: 8Mio and shape 8Mio, range 0-32 with average 25
-    idxs_sparse = np.cumsum(counts)  # shape 8Mio, range(200Mio)
-    
-    slices = np.array([slice(idxs_sparse[i], idxs_sparse[i]) for i in range(len(idxs_sparse))])
+    idxs_sparse = np.unique(idx_photon, return_index=True, return_counts=False)[1]  
+    slices = np.array([slice(idxs_sparse[i], idxs_sparse[i+1]) for i in range(len(idxs_sparse)-1)] + [slice(idxs_sparse[-1], len(idxs_sparse))])
     return slices
 
 def slice_sparse(sparse: Sparse, mask: Mask, slice_array: Optional[NDArray] = None) -> Sparse:
+    """
+    This function slices sparse rechits based on specified conditions (e.g., pt > 50 or selecting fakes). 
+    This function translates the condition and applies it to the sparse rechits.
+    (Sparse rechits are about 25 times longer than the main dataframe on which most conditions apply)
+
+    Parameters:
+        sparse (ndarray): Sparse rechits to be sliced.
+        mask (ndarray): Condition to be applied.
+        slice_array (ndarray, optional): The result from `create_slice_arr`. 
+                                        Use this if slicing more than once to avoid recomputation 
+                                        (e.g., using different pt cuts).
+
+    Example usage:
+        df = pd.read_pickle(dataframefile)
+        sparse = load_sparse(rechitsfile)
+
+        # Select fakes
+        mask = ~df.real.to_numpy()
+        fake_rechits = slice_sparse(sparse, mask)
+
+        # Apply different pt cuts
+        slice_arr = get_slice_arr(sparse)
+        cut50 = df.pt > 50
+        cut100 = df.pt > 100
+
+        rechits_50 = slice_sparse(sparse, cut50, slice_arr)
+        rechits_100 = slice_sparse(sparse, cut100, slice_arr)  # Passing slice_arr saves about 30s after the first time
+    """
     if slice_array is None:
         slice_array = create_slice_arr(sparse)
     selected_slices = slice_array[mask]
     sel = np.r_[tuple(selected_slices)]  # this converts the slices in an array of indices, which the slices would access
     selected: Sparse = tuple(arr[sel] for arr in sparse)
     return selected
-
-
-
-
 
