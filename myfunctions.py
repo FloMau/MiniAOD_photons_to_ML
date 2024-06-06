@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 from numpy.typing import NDArray
 from mytypes import Filename, Sparse
@@ -22,10 +21,22 @@ def load_sparse(file: Filename) -> Sparse:
     sparse = (npz['values'], npz['idx1'], npz['idx2'], npz['idx3'])
     return sparse
 
-def sparse_to_dense(sparse: Sparse, shape: Union[Tuple[int, int], Tuple[int, int, int]]=(32, 32)) -> NDArray:
+def sparse_to_dense(sparse: Sparse, shape: Optional[Union[Tuple[int, int], Tuple[int, int, int]]] = (32, 32)) -> NDArray:
     """shape can be 2d or 3d, 
     if 2d it must be the shape of the images and the number of photons will be inferred"""
-    values, indices = sparse[0], sparse[1:]
+    values = sparse[0]
+    # this function needs to work if the original sparse array was slices
+    # slicing means the photon_idxs are continous and may hold numbers higher than the number of photons
+    # I need to shift them to make them proper indices again
+    def transform_to_indices(arr):
+        unique = np.unique(arr, return_index=False, return_counts=False)
+        indices = np.arange(len(unique))
+    
+        number_to_index = dict(zip(unique, indices))    
+        indices_array = np.array([number_to_index[_] for _ in arr])
+        return indices_array
+
+    indices = (transform_to_indices(sparse[1]), sparse[2], sparse[3])
     if len(shape)==2:
         num = np.max(indices[0])+1
         shape = (num, *shape)
