@@ -73,6 +73,11 @@ def did_convert_oneleg(photon: Particle) -> bool:
     if photon.conversionsOneLeg(): return True
     else: return False
 
+def has_conversion_tracks(photon: Particle) -> bool:
+    """checks if photon has any conversion tracks (one- or two-legged)"""
+    if photon.hasConversionTracks(): return True
+    else: return False
+
 def get_detector_ID(photon: Particle) -> bool:
     '''returns True for Barrel and False for Endcap'''
     return photon.superCluster().seed().seed().subdetId()==1
@@ -134,6 +139,7 @@ def get_all(photon: Particle) -> dict[str, Union[int, float, bool]]:
         'detID': True if photon.superCluster().seed().seed().subdetId() == 1 else False,
         'converted': True if photon.conversions() else False,
         'convertedOneLeg': True if photon.conversionsOneLeg() else False,
+        'conversion_tracks': has_conversion_tracks(photon),
         'eveto': photon.passElectronVeto(),
         "true_energy": true_energy,
         "SC_raw_energy": photon.superCluster().rawEnergy()
@@ -289,6 +295,6 @@ def process_file(file: Filename) -> None:
 
 if __name__ == '__main__':
     # high pt test file:
-    # process_file('/store/mc/Run3Summer22EEMiniAODv4/GJet_PT-40_DoubleEMEnriched_TuneCP5_13p6TeV_pythia8/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/30000/cb93eb36-cefb-4aea-97aa-fcf8cd72245f.root')
+    process_file('/store/mc/Run3Summer22EEMiniAODv4/GJet_PT-40_DoubleEMEnriched_TuneCP5_13p6TeV_pythia8/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/30000/cb93eb36-cefb-4aea-97aa-fcf8cd72245f.root')
     # mgg test file:
-    process_file('/store/mc/Run3Summer22EEMiniAODv4/GJet_PT-40_DoubleEMEnriched_MGG-80_TuneCP5_13p6TeV_pythia8/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/50000/d9c395aa-9eee-426a-944f-9ef41058f2d3.root')
+    #process_file('/store/mc/Run3Summer22EEMiniAODv4/GJet_PT-40_DoubleEMEnriched_MGG-80_TuneCP5_13p6TeV_pythia8/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/50000/d9c395aa-9eee-426a-944f-9ef41058f2d3.root')
