@@ -1,20 +1,20 @@
 import numpy as np
 import pandas as pd
 import argparse
-# from mytypes import Filename
-from typing import Tuple
+
+from typing import Tuple, Union
 from mytypes import Filename, Mask
 
-def setup_parser():
+def process_parser() -> Tuple[Filename, Filename]:
     parser = argparse.ArgumentParser(description='pythonscript to calculate and save preselection mask')
     parser.add_argument('datafile', help='file to be read')
     parser.add_argument('outfile', help='save preselection as file')
-    parser.add_argument('--barrel_only', action='store_true', help='only read photons in the barrel '
-                                                                    '(makes the array smaller instead of adding as mask on top')
     args = parser.parse_args()
-    return args
+    filename_: Filename = args.datafile
+    outfile_: Filename = args.outfile
+    return filename_, outfile_
 
-def get_preselection(df):
+def get_preselection(df: Union[pd.DataFrame, dict]) -> Mask:
     '''returns mask for preselction, without eveto'''
     pt = df['pt'] > 25  # no leading photon, because I do single photon studies
     transition = (1.44 < np.abs(df['eta'])) & (np.abs(df['eta']) < 1.57)
@@ -47,21 +47,16 @@ def get_preselection(df):
     total_mask = pt & eta & shower_shape & one_of
     return total_mask
 
-def get_total_preselection(df) -> Mask:
+def get_total_preselection(df: Union[pd.DataFrame, dict]) -> Mask:
     """adds eveto to preselection and filters NaNs in rho"""
     return get_preselection(df) & df['eveto'] & (~np.isnan(df['rho']))
 
 
 if __name__ == "__main__":
-    args = setup_parser()
-    filename = args.datafile
-    outfile = args.outfile
+    filename, outfile = process_parser()
 
     df = pd.read_pickle(filename)
     preselection = get_total_preselection(df) & df['eveto']
-    if barrel_only:
-        preselection = preselection[df['detID']]
-
 
     np.save(outfile, preselection)
     print(f'INFO: saved as {outfile}')

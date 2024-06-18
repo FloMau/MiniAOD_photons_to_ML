@@ -4,7 +4,8 @@ from DataFormats.FWLite import Handle, Events
 import os
 import numpy as np
 import pandas as pd
-import argparse
+from datetime import date
+
 
 from get_preselection import get_total_preselection
 
@@ -72,6 +73,11 @@ def did_convert_oneleg(photon: Particle) -> bool:
     if photon.conversionsOneLeg(): return True
     else: return False
 
+def has_conversion_tracks(photon: Particle) -> bool:
+    """checks if photon has any conversion tracks (one- or two-legged)"""
+    if photon.hasConversionTracks(): return True
+    else: return False
+
 def get_detector_ID(photon: Particle) -> bool:
     '''returns True for Barrel and False for Endcap'''
     return photon.superCluster().seed().seed().subdetId()==1
@@ -133,6 +139,7 @@ def get_all(photon: Particle) -> dict[str, Union[int, float, bool]]:
         'detID': True if photon.superCluster().seed().seed().subdetId() == 1 else False,
         'converted': True if photon.conversions() else False,
         'convertedOneLeg': True if photon.conversionsOneLeg() else False,
+        'conversion_tracks': has_conversion_tracks(photon),
         'eveto': photon.passElectronVeto(),
         "true_energy": true_energy,
         "SC_raw_energy": photon.superCluster().rawEnergy()
@@ -197,8 +204,6 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
     # lists to fill in the eventloop:
     df_list: List[dict] = []  # save data in nested list to convert to DataFrame later
     rechit_list: List[NDArray] = []  # save data in nested list to convert to DataFrame later
-    num_real_list: List[int] = []
-    num_fake_list: List[int] = []
     for i, event in enumerate(events):
         if i == 0:
             print("\tINFO: file open sucessful, starting Event processing")
@@ -210,18 +215,11 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
         event.getByLabel(RecHitLabelEE, RecHitHandleEE)
         event.getByLabel(rhoLabel, rhoHandle)
 
-        num_real: int = 0
-        num_fake: int = 0
         for photon in photonHandle.product():
             if not get_detector_ID(photon): 
                 continue
             
             # dataframe
-            if is_real(photon):
-                num_real += 1
-            else:
-                num_fake += 1
-            
             seed_id = photon.superCluster().seed().seed()
             seed_id = ROOT.EBDetId(seed_id)  # get crystal indices of photon candidate seed:
 
@@ -233,7 +231,6 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
             if not get_total_preselection(photonAttributes):
                 continue
 
-            df_list += [photonAttributes]  # list of dicts with the values of the respective photon
 
             # rechits
             # usung photon.EEDetId() directly gives the same value but errors in select_recHits
@@ -243,10 +240,13 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
             else:
                 recHits = RecHitHandleEE.product()
             rechits_array = select_rechits(photon_seed=seed_id, recHits=recHits, distance=rechitdistance)
+
+            if rechits_array.sum()==0: continue
+
+            # add event only after filtering barrel, preselection and empty rechits
+            df_list += [photonAttributes]  # list of dicts with the values of the respective photon
             rechit_list += [rechits_array]
 
-        num_real_list += [num_real]*(num_real + num_fake)
-        num_fake_list += [num_fake]*(num_real + num_fake)
     print('INFO: all events processed')
 
     df: pd.DataFrame = pd.DataFrame(df_list)  # labels are taken from the dicts in data_list
@@ -258,8 +258,12 @@ def main(file: Filename, rechitdistance: int = 5) -> Tuple[pd.DataFrame, NDArray
 
 def process_file(file: Filename) -> None:
 
-    datasite = 'T2_US_Wisconsin'
-    # datasite = 'T1_US_FNAL_Disk'
+    # determine datasite from filename
+    datasite = 'T2_US_Wisconsin'  # high pt, g+jets, postEE
+    if 'MGG' in file:  # mgg cut, g+jets, postEE
+        datasite = 'T2_US_Caltech'  
+    elif '10to40' in file:  # low pt, g+jets, postEE
+        datasite = 'T1_US_FNAL_Disk'  
     if datasite is not None:
         file = '/store/test/xrootd/' + datasite + file
     file = 'root://xrootd-cms.infn.it/' + file
@@ -267,22 +271,30 @@ def process_file(file: Filename) -> None:
     df, rechits = main(file, rechitdistance=16)
 
     # save stuff
-    savedir = './output15May2024'
-    if not (os.path.exists(savedir + "/recHits") and  os.path.exists(savedir + "/df")):
-        os.makedirs(savedir + "/df")
-        os.makedirs(savedir + "/recHits")
+    current_date = date.today()
+    formatted_date = current_date.strftime("%d%B%Y")
+    savedir = f'./output{formatted_date}/'
+    # in principle there is no need to distinguish between low/high pt when saving
+    # they all have different names (I checked)
+    if not (os.path.exists(savedir + "recHits/") and  os.path.exists(savedir + "df/")):
+        os.makedirs(savedir + "df/")
+        os.makedirs(savedir + "recHits/")
 
     outname: str = file.split('/')[-1].split('.')[0]  # name of input file without directory and ending
+    dfname: Filename = savedir + 'df/' + outname + '.pkl'
+    rechitname: str = savedir + 'recHits/' + outname + '.npy'
 
-    dfname: Filename = savedir + '/df/' + outname + '.pkl'
+
     df.to_pickle(dfname)
     print('INFO: photon df file saved as:', dfname)
 
-    rechitname: str = savedir + '/recHits/' + outname + '.npy'
     np.save(rechitname, rechits)
     print('INFO: recHits file saved as:', rechitname)
 
     print('INFO: finished running.')
 
 if __name__ == '__main__':
+    # high pt test file:
     process_file('/store/mc/Run3Summer22EEMiniAODv4/GJet_PT-40_DoubleEMEnriched_TuneCP5_13p6TeV_pythia8/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/30000/cb93eb36-cefb-4aea-97aa-fcf8cd72245f.root')
+    # mgg test file:
+    #process_file('/store/mc/Run3Summer22EEMiniAODv4/GJet_PT-40_DoubleEMEnriched_MGG-80_TuneCP5_13p6TeV_pythia8/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/50000/d9c395aa-9eee-426a-944f-9ef41058f2d3.root')
